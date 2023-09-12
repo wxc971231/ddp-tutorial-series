@@ -1,0 +1,21 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: torchrun",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/tim/anaconda3/envs/project/lib/python3.8/site-packages/torch/distributed/run.py",
+            "args":[
+                "--standalone",
+                "--nproc_per_node=gpu",
+                "/home/tim/桌面/git/ddp-tutorial-series/minGPT-ddp/mingpt/main.py"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

@@ -129,7 +129,7 @@ hydra:
   runtime:
     version: 1.3.2
     version_base: '1.3'
-    cwd: /home/tim/桌面/git/ddp-tutorial-series/minGPT-ddp/mingpt
+    cwd: /home/tim/桌面/git/ddp-tutorial-series
     config_sources:
     - path: hydra.conf
       schema: pkg
@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /home/tim/桌面/git/ddp-tutorial-series/minGPT-ddp/mingpt
+    output_dir: /home/tim/桌面/git/ddp-tutorial-series
     choices:
       hydra/env: default
       hydra/callbacks: null

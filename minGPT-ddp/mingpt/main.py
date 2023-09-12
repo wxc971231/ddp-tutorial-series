@@ -10,6 +10,8 @@ import hydra
 
 
 def ddp_setup():
+    os.environ["MASTER_ADDR"] = "localhost" # 由于这里是单机实验所以直接写 localhost
+    os.environ["MASTER_PORT"] = "12355"     # 任意空闲端口
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 

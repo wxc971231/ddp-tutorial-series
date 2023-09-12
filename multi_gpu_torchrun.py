@@ -23,8 +23,11 @@ from torch.distributed import init_process_group, destroy_process_group
 
 
 def ddp_setup():
-    # torchrun 会处理环境变量以及 rank & world_size 设置
+    # torchrun rank & world_size 设置
+    os.environ["MASTER_ADDR"] = "localhost" # 由于这里是单机实验所以直接写 localhost
+    os.environ["MASTER_PORT"] = "12355"     # 任意空闲端口
     init_process_group(backend="nccl")
+    torch.cuda.set_device(int(os.environ['LOCAL_RANK']))
 
 class Trainer:
     def __init__(
