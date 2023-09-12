@@ -1,3 +1,4 @@
+# 使用 DistributedDataParallel 进行单机多卡训练
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -48,7 +49,7 @@ class Trainer:
         self.model = model.to(gpu_id)
         self.train_data = train_data
         self.optimizer = optimizer
-        self.save_every = save_every
+        self.save_every = save_every                    # 指定保存 ckpt 的周期
         self.model = DDP(model, device_ids=[gpu_id])    # model 要用 DDP 包装一下
 
     def _run_batch(self, source, targets):
@@ -61,8 +62,8 @@ class Trainer:
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
         print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
-        self.train_data.sampler.set_epoch(epoch)
-        for source, targets in self.train_data:
+        self.train_data.sampler.set_epoch(epoch)        # 在各个 epoch 入口调用 DistributedSampler 的 set_epoch 方法是很重要的，这样才能打乱每个 epoch 的样本顺序
+        for source, targets in self.train_data: 
             source = source.to(self.gpu_id)
             targets = targets.to(self.gpu_id)
             self._run_batch(source, targets)

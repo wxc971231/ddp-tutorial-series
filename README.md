@@ -1,5 +1,5 @@
 # ddp-tutorial-series
-Follow the pytorch official tutorial to learn how to use `nn.parallel.DistributedDataParallel` to speed up training
+Follow the [pytorch official tutorial](https://pytorch.org/tutorials/beginner/ddp_series_intro.html?utm_source=youtube&utm_medium=organic_social&utm_campaign=tutorial) to learn how to use `nn.parallel.DistributedDataParallel` to speed up training
 
 # distributed-pytorch
 
@@ -12,7 +12,15 @@ Each code file extends upon the previous one. The series starts with a non-distr
 - [single_gpu.py](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/single_gpu.py): Non-distributed training script
 - [multigpu.py](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multigpu.py): DDP on a single node
 - [multigpu_torchrun.py](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multigpu_torchrun.py): DDP on a single node using Torchrun
-- [multinode.py](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multinode.py): DDP on multiple nodes using Torchrun (and optionally Slurm)
-  - [slurm/setup_pcluster_slurm.md](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/slurm/setup_pcluster_slurm.md): instructions to set up an AWS cluster
-  - [slurm/config.yaml.template](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/slurm/config.yaml.template): configuration to set up an AWS cluster
-  - [slurm/sbatch_run.sh](https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/slurm/sbatch_run.sh): slurm script to launch the training job
+- minGPT-ddp:  training a GPT-like model (from the minGPT repo [https://github.com/karpathy/minGPT](https://www.youtube.com/redirect?event=video_description&redir_token=QUFFLUhqbGo2ZjQtMzFlQ2pJQmV6VV9yenFpdmlXVGItd3xBQ3Jtc0tueWdxVFZsYTNPRXFTSW5xejhUajZ1OVYydjNraENoZzNka05ZLWMtZXJkM1VjaFd5cENUMld0TEc5N3VkRFV2bzM2aWdvWVRjTU01TmFfZE9mdXVBTFczWDJZMnU2TjA4Z0tCd25LX2sxOFJLMWtsMA&q=https%3A%2F%2Fgithub.com%2Fkarpathy%2FminGPT&v=XFsFDGKZHh4)) with DDP. 
+
+
+
+## 我的笔记
+
+- [Pytorch 多卡并行（1）—— 原理简介和 DDP 并行实践](https://blog.csdn.net/wxc971231/article/details/132816104)
+
+- [Pytorch 多卡并行（2）—— 使用 torchrun 进行容错处理](https://blog.csdn.net/wxc971231/article/details/132827787)
+
+- [Pytorch 多卡并行（3）—— 使用 DDP 加速 minGPT 训练](https://blog.csdn.net/wxc971231/article/details/132829661)
+
