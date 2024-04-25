@@ -7,6 +7,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import os
+import numpy as np
+from tqdm import tqdm
 
 # 对 python 多进程的一个 pytorch 包装
 import torch.multiprocessing as mp
@@ -23,7 +25,7 @@ from torch.distributed import init_process_group, destroy_process_group
 
 
 def ddp_setup():
-    # torchrun rank & world_size 设置
+    # torchrun 会处理环境变量以及 rank & world_size 设置
     os.environ["MASTER_ADDR"] = "localhost" # 由于这里是单机实验所以直接写 localhost
     os.environ["MASTER_PORT"] = "12355"     # 任意空闲端口
     init_process_group(backend="nccl")
@@ -39,6 +41,7 @@ class Trainer:
         snapshot_path: str,                                 # 保存 snapshots 的位置 
     ) -> None:
         self.gpu_id = int(os.environ['LOCAL_RANK'])         # torchrun 会自动设置这个环境变量指出当前进程的 rank
+        self.world_size = int(os.environ['WORLD_SIZE'])
         self.model = model.to(self.gpu_id)
         self.train_data = train_data
         self.optimizer = optimizer
@@ -64,18 +67,20 @@ class Trainer:
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = F.cross_entropy(output, targets)
+        loss = torch.mean(F.mse_loss(output, targets)) 
         loss.backward()
         self.optimizer.step()
+        return loss.item()
 
     def _run_epoch(self, epoch):
-        b_sz = len(next(iter(self.train_data))[0])
-        print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
-        self.train_data.sampler.set_epoch(epoch)
+        epoch_losses = []
+        self.train_data.sampler.set_epoch(epoch)            # 设置 epoch 保证多 GPU 上数据不重叠
         for source, targets in self.train_data:
             source = source.to(self.gpu_id)
             targets = targets.to(self.gpu_id)
-            self._run_batch(source, targets)
+            loss = self._run_batch(source, targets)
+            epoch_losses.append(loss)
+        return np.mean(epoch_losses)
 
     def _save_snapshot(self, epoch):
         # 在 snapshot 中保存恢复训练所必须的参数
@@ -84,20 +89,36 @@ class Trainer:
             "EPOCHS_RUN": epoch,
         }
         torch.save(snapshot, self.snapshot_path)
-        print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
+        #print(f"Epoch {epoch} | Training snapshot saved at {self.snapshot_path}")
 
     def train(self, max_epochs: int):
-        for epoch in range(self.epochs_run, max_epochs):    # 现在从 self.epochs_run 开始训练，统一重启的情况
-            self._run_epoch(epoch)
+        # 现在从 self.epochs_run 开始训练，统一重启的情况
+        with tqdm(total=max_epochs, desc=f"[GPU{self.gpu_id}] Training", position=self.gpu_id, initial=self.epochs_run) as pbar:
+            for epoch in range(self.epochs_run + 1, max_epochs + 1):
+                epoch_loss = self._run_epoch(epoch)                         
 
-            # 各个 GPU 上都在跑一样的训练进程，这里指定 rank0 进程保存 snapshot 以免重复保存
-            if self.gpu_id == 0 and epoch % self.save_every == 0:
-                self._save_snapshot(epoch)
+                # 各个 GPU 上都在跑一样的训练进程，这里指定 rank0 进程保存 snapshot 以免重复保存
+                if self.gpu_id == 0 and epoch % self.save_every == 0:
+                    self._save_snapshot(epoch)
 
+                pbar.set_postfix({'epoch': epoch, 'loss':'{:.2f}'.format(epoch_loss)})
+                pbar.update()
+                
 class MyTrainDataset(Dataset):
     def __init__(self, size):
         self.size = size
-        self.data = [(torch.rand(20), torch.rand(1)) for _ in range(size)]
+        
+        # Simple Linear Regression problem
+        input_dim = 2
+        output_dim = 1
+        true_w = torch.Tensor([-2, 3.4]).view(input_dim, output_dim)
+        true_b = 4.2
+
+        features = torch.randn(size=(size, input_dim), dtype=torch.float32) 
+        labels = torch.mm(features,true_w) + true_b
+        labels += torch.tensor(np.random.normal(0, 0.01, size=labels.size()), dtype=torch.float32)
+
+        self.data = [(features[i], labels[i]) for i in range(size)]
 
     def __len__(self):
         return self.size
@@ -106,8 +127,8 @@ class MyTrainDataset(Dataset):
         return self.data[index]
 
 def load_train_objs():
-    train_set = MyTrainDataset(2048)  # load your dataset
-    model = torch.nn.Linear(20, 1)  # load your model
+    train_set = MyTrainDataset(2048)    # load your dataset
+    model = torch.nn.Linear(2, 1)       # load your model
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
     return train_set, model, optimizer
 
@@ -136,7 +157,7 @@ def main(save_every: int, total_epochs: int, batch_size: int, snapshot_path: str
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='simple distributed training job')
-    parser.add_argument('--total-epochs', type=int, default=50, help='Total epochs to train the model')
+    parser.add_argument('--total-epochs', type=int, default=100, help='Total epochs to train the model')
     parser.add_argument('--save-every', type=int, default=10, help='How often to save a snapshot')
     parser.add_argument('--batch_size', default=32, type=int, help='Input batch size on each device (default: 32)')
     args = parser.parse_args()
