@@ -1,3 +1,4 @@
+[<img src="https://api.gitsponsors.com/api/badge/img?id=686616963" height="20">](https://api.gitsponsors.com/api/badge/link?p=KoJzzoI5V0U5cxCo3lEj9srdIMTw7IoiFPToGomZRFp9HNMVxC2tGRy4n5Chm6M03jA9RjbezjCIKyoQVFxp7yN3+IexpNGKeaLHWoqwrp/6C6BjFgQf7A9QnfnJcs9D)
 # ddp-tutorial-series
 Follow the [pytorch official tutorial](https://pytorch.org/tutorials/beginner/ddp_series_intro.html?utm_source=youtube&utm_medium=organic_social&utm_campaign=tutorial) to learn how to use `nn.parallel.DistributedDataParallel` to speed up training
 
